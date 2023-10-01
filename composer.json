@@ -1,0 +1,22 @@
+{
+    "name": "drajathasan/slims-bebas-pustaka",
+    "description": "Plugin Bebas Pustaka",
+    "type": "plugin-slims",
+    "require": {
+        "slims/pdf-factory": "dev-main",
+        "dompdf/dompdf": "^2.0"
+    },
+    "license": "GPL-3.0",
+    "autoload": {
+        "psr-4": {
+            "BebasPustaka\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Drajat Hasan",
+            "email": "drajathasan20@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable"
+}
