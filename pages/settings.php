@@ -6,12 +6,34 @@
  */
 
 use SLiMS\DB;
+use SLiMS\Filesystems\Storage;
 
 defined('INDEX_AUTH') OR die('Direct access not allowed!');
 
 require SB . 'admin/default/session_check.inc.php';
 require_once SIMBIO . 'simbio_GUI/table/simbio_table.inc.php';
 require_once SIMBIO . 'simbio_GUI/form_maker/simbio_form_table_AJAX.inc.php';
+
+if (isset($_POST['saveData'])) {
+    if ($_FILES['signature']['name'] || $_FILES['headerimage']['name']) {
+        $pluginDir = getDirname();
+        $pluginStorage = Storage::plugin();
+        foreach ($_FILES as $name => $detail) {
+            $pluginStorage->upload($name, function($pluginStorage) use($sysconf) {
+                // Extension check
+                $pluginStorage->isExtensionAllowed($sysconf['allowed_images']);
+
+                // destroy it if failed
+                if (!empty($pluginStorage->getError())) $pluginStorage->destroyIfFailed();
+
+                // remove exif data
+                if (empty($pluginStorage->getError())) $pluginStorage->cleanExifInfo();
+            })->as($pluginDir . DS . 'static' . DS . str_replace('image', '', $name));
+        }
+    }
+    toastr('Hai')->alert();
+    exit;
+}
 
 /* RECORD FORM */
 ob_start();
