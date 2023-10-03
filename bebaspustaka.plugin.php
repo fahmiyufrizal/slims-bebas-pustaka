@@ -9,5 +9,5 @@
  */
 use SLiMS\Plugins;
 
-Plugins::getInstance()->registerAutoload(__DIR__);
+Plugins::getInstance()->registerAutoload();
 Plugins::menu('circulation', 'Bebas Pustaka', __DIR__ . '/pages/bebas_pustaka.php');

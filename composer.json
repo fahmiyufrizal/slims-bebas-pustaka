@@ -10,7 +10,8 @@
     "autoload": {
         "psr-4": {
             "BebasPustaka\\": "src/"
-        }
+        },
+        "files": ["src/helper.php"]
     },
     "authors": [
         {

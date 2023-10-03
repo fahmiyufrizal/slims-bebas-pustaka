@@ -5,6 +5,9 @@
  * @File name           : index.php
  */
 
+use SLiMS\Pdf\Factory;
+use SLiMS\DB;
+
 defined('INDEX_AUTH') OR die('Direct access not allowed!');
 
 // IP based access limitation
@@ -42,7 +45,7 @@ $max_print = 50;
 if (isset($_GET['action']) && $_GET['action'] === 'clear')
 {
     // clear session
-    if (isset($_SESSION['tarsius_print'])) $_SESSION['tarsius_print'] = [];
+    if (isset($_SESSION['bebas_pustaka'])) $_SESSION['bebas_pustaka'] = [];
 
     // unset ession
     unset($_GET['action']);
@@ -60,9 +63,16 @@ if (isset($_GET['action']) && $_GET['action'] === 'clear')
 
 if (isset($_POST['itemID']))
 {
-    $_SESSION['tarsius_print'] = $_POST['itemID'];
-    utility::jsToastr('Sukses', 'Kamu berhasil membuat session untuk cetak data', 'success');
-    $queueCount = count($_SESSION['tarsius_print']);
+    if (!isset($_SESSION['bebas_pustaka'])) $_SESSION['bebas_pustaka'] = [];
+
+    if ((count($_POST['itemID']) + count($_SESSION['bebas_pustaka'])) > $max_print) {
+        toastr('Antrian melebihi batas maksimal')->error();
+        exit;
+    }
+
+    $_SESSION['bebas_pustaka'] = array_merge($_SESSION['bebas_pustaka'], $_POST['itemID']);
+    utility::jsToastr('Sukses', 'Berhasil menambkan data kedalam antrian cetak', 'success');
+    $queueCount = count($_SESSION['bebas_pustaka']);
     echo <<<HTML
     <script>
         parent.document.querySelector('#queueCount').innerHTML = {$queueCount};
@@ -71,9 +81,36 @@ if (isset($_POST['itemID']))
     exit;
 }
 
+if (isset($_GET['action']) && $_GET['action'] === 'settings') {
+    include_once __DIR__ . DS . 'settings.php';
+    exit;
+}
+
 if (isset($_GET['action']) && $_GET['action'] === 'print')
 {
-    utility::jsToastr('Sukses', 'Kamu berhasil mencetak', 'success');
+    
+    // Register provider
+    $provider = config('bebas_pustaka.default_provider', [
+        'MyDompdf', \BebasPustaka\Providers\Dompdf::class
+    ]);
+    Factory::registerProvider(...$provider);
+
+    Factory::useProvider($provider[0]);
+    $kop = getBaseDir('static/header.png');
+    $raw = base64_encode(getStatic('header.png'));
+
+    $questionMark = trim(str_repeat('?,', count($_SESSION['bebas_pustaka'])), ',');
+    $member = DB::getInstance()->prepare('select member_id, member_name, member_address from member where member_id in (' . $questionMark . ')');
+    $member->execute($_SESSION['bebas_pustaka']);
+
+    $content = [];
+    while ($data = $member->fetch(PDO::FETCH_ASSOC)) {
+        $content[] = $data;
+    }
+
+    $_SESSION['bebas_pustaka'] = [];
+    Factory::setContent($content)->stream();
+    exit;
     exit;
 }
 
@@ -87,8 +124,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'print')
         <div class="sub_section">
             <div class="btn-group">
                 <a target="blindSubmit" href="<?= $_SERVER['PHP_SELF'] . '?' . httpQuery(['action' => 'clear']) ?>" class="notAJAX btn btn-danger mx-1"><?= __('Clear Print Queue') ?></a>
-                <a target="blindSubmit" href="<?= $_SERVER['PHP_SELF'] . '?' . httpQuery(['action' => 'print']) ?>" class="notAJAX btn btn-primary mx-1"><?= __('Print Barcodes for Selected Data'); ?></a>
-                <a href="<?= $_SERVER['PHP_SELF'] . '?' . httpQuery(['action' => 'settings']) ?>" class="notAJAX btn btn-default openPopUp mx-1" width="780" height="500" title="<?= __('Change print barcode settings'); ?>"><?= __('Change print barcode settings'); ?></a>
+                <a href="<?= $_SERVER['PHP_SELF'] . '?' . httpQuery(['action' => 'print']) ?>" width="765" height="500" class="notAJAX openPopUp btn btn-primary mx-1" onclick="$('#queueCount').html('0')">Cetak Surat Bebas Pustaka</a>
+                <a href="<?= $_SERVER['PHP_SELF'] . '?' . httpQuery(['action' => 'settings']) ?>" class="notAJAX btn btn-default openPopUp mx-1" width="780" height="500" title="Ubah Pengaturan Bebas Pustaka">Ubah Pengaturan Bebas Pustaka</a>
             </div>
             <form name="search" action="<?= $_SERVER['PHP_SELF'] . '?' . httpQuery() ?>" id="search" method="get" class="form-inline"><?php echo __('Search'); ?>
                 <input type="text" name="keywords" class="form-control col-md-3"/>
@@ -99,8 +136,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'print')
         <div class="infoBox">
         <?php
         echo __('Maximum').' <strong class="text-danger">'.$max_print.'</strong> '.__('records can be printed at once. Currently there is').' ';
-        if (isset($_SESSION['tarsius_print'])) {
-            echo '<strong id="queueCount" class="text-danger">'.count($_SESSION['tarsius_print']).'</strong>';
+        if (isset($_SESSION['bebas_pustaka'])) {
+            echo '<strong id="queueCount" class="text-danger">'.count($_SESSION['bebas_pustaka']).'</strong>';
         } else { echo '<strong id="queueCount" class="text-danger">0</strong>'; }
         echo ' '.__('in queue waiting to be printed.');
         ?>
@@ -121,7 +158,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'print')
  * - dummy_plugin as dp left join non_dummy_plugin as ndp on dp.id = ndp.id ... dst
  *
  */
-$table_spec = 'member';
+$table_spec = 'member as m';
 
 // membuat datagrid
 $datagrid = new simbio_datagrid();
@@ -141,7 +178,7 @@ $datagrid = new simbio_datagrid();
  * - Jangan lupa menyertakan kolom yang bersifat PK (Primary Key) / FK (Foreign Key) pada urutan pertama,
  *   karena kolom tersebut digunakan untuk pengait pada proses lain.
  */
- $datagrid->setSQLColumn('member_id AS `ID Anggota`, member_name AS `Nama Anggota`');
+ $datagrid->setSQLColumn('m.member_id, m.member_id AS `ID Anggota`, m.member_name AS `Nama Anggota`');
 
 /** 
  * Pencarian data
@@ -154,13 +191,15 @@ $datagrid = new simbio_datagrid();
  * - $criteria = ' kolom1 = "'.$keywords.'" OR kolom2 = "'.$keywords.'" OR kolom3 = "'.$keywords.'"';
  * - atau anda bisa menggunakan query anda.
  */
+$criteria = ' m.member_id NOT IN (SELECT l.member_id FROM loan AS l WHERE l.is_return = 0 AND l.is_lent = 1)';
  if (isset($_GET['keywords']) AND $_GET['keywords']) 
  {
      $keywords = utility::filterData('keywords', 'get', true, true, true);
-     $criteria = ' kolom1 = "'.$keywords.'"';
+     $criteria .= ' AND (member_id LIKE "%'.$keywords.'%" OR member_name LIKE "%'.$keywords.'%")';
      // jika ada keywords maka akan disiapkan criteria nya
-     $datagrid->setSQLCriteria($criteria);
  }
+
+ $datagrid->setSQLCriteria($criteria);
 
 /** 
  * Atribut tambahan
@@ -176,7 +215,7 @@ $datagrid->edit_property = false;
 $datagrid->chbox_property = array('itemID', __('Add'));
 $datagrid->chbox_action_button = __('Add To Print Queue');
 $datagrid->chbox_confirm_msg = __('Add to print queue?');
-$datagrid->column_width = array('95%');
+$datagrid->column_width = array('5%', '95%');
 // set checkbox action URL
 $datagrid->chbox_form_URL = $_SERVER['PHP_SELF'] . '?' . httpQuery();
 // put the result into variables

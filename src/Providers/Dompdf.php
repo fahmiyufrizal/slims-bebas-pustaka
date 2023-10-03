@@ -1,19 +1,44 @@
 <?php
 namespace BebasPustaka\Providers;
 
+use Closure;
 use SLiMS\Pdf\Contract;
 use Dompdf\Dompdf as Core;
+use Carbon\Carbon;
 
 class Dompdf extends Contract
 {
     public function setPdf():void
     {
-        $this->pdf = new Dompdf();
+        $this->pdf = new Core;
     }
 
-    public function setContent():void
+    public function setContent(array $data = []):self
     {
-        $this->pdf->loadHtml('<h1>Hello World!</h1>');
+        $currentTemplate = config('bebas_pustaka.default_template', 'default.html');
+        $fields = config('bebas_pustaka.fields', [
+            'letternumber' => 'nomor surat belum diatur',
+            'openstate' => 'kalimat pembuka belum diatur',
+            'closestate' => 'kalimat penutup belum diatur',
+            'city' => 'Nama kota belum diatur',
+            'librarian_position' => 'Posisi Pustakawan belum diatur',
+            'librarian' => 'Nama pustakawan belum diatur',
+            'numid' => 'NIK/NIP Pustakwan belum diatur',
+            'signature' => 'data:' . mime_content_type(getBaseDir('static/signature.png')) . ';base64, ' . base64_encode(getStatic('signature.png')),
+            'headerimage' => 'data:' . mime_content_type(getBaseDir('static/header.png')) . ';base64, ' . base64_encode(getStatic('header.png')),
+        ]);
+
+        $content = '';
+        foreach ($data as $order => $collection) {
+            $collection = array_merge($collection, $fields, ['date' => Carbon::parse(date('Y-m-d'))->locale('id_ID')->isoFormat('LL')]);
+            $content .= parseToTemplate(getTemplate($currentTemplate), $collection);
+            if (count($data) > 1 && $order !== array_key_last($data)) {
+                $content .= '<div style="page-break-before: always;"></div>';
+            }
+        }
+
+        $this->pdf->loadHtml(parseToTemplate(getTemplate('layout.html'), ['content' => $content]));
+        return $this;
     }
     
     public function download(string $filename):void
