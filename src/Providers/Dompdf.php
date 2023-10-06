@@ -8,7 +8,7 @@ use Carbon\Carbon;
 
 class Dompdf extends Contract
 {
-    protected string $name = 'Dompdf';
+    public static string $name = 'Dompdf';
     public function setPdf():void
     {
         $this->pdf = new Core;

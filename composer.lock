@@ -284,12 +284,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/goslims/pdf-factory.git",
-                "reference": "562f9ce67a3bd5f629aa189efbf9be99c618b159"
+                "reference": "c65c6afacc2528a3ae1102251a04afa80d5dafb2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/goslims/pdf-factory/zipball/562f9ce67a3bd5f629aa189efbf9be99c618b159",
-                "reference": "562f9ce67a3bd5f629aa189efbf9be99c618b159",
+                "url": "https://api.github.com/repos/goslims/pdf-factory/zipball/c65c6afacc2528a3ae1102251a04afa80d5dafb2",
+                "reference": "c65c6afacc2528a3ae1102251a04afa80d5dafb2",
                 "shasum": ""
             },
             "require": {
@@ -320,7 +320,7 @@
                 "issues": "https://github.com/goslims/pdf-factory/issues",
                 "source": "https://github.com/goslims/pdf-factory/tree/main"
             },
-            "time": "2023-10-06T15:43:12+00:00"
+            "time": "2023-10-06T23:18:09+00:00"
         }
     ],
     "packages-dev": [],

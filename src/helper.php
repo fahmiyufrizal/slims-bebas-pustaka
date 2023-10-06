@@ -5,6 +5,13 @@ if (!function_exists('getBaseDir')) {
     }
 }
 
+if (!function_exists('getProviders')) {
+    function getProviders()
+    {
+        return array_diff(scandir(getBaseDir('src' . DS . 'providers')), ['.','..']);
+    }
+}
+
 if (!function_exists('getDirname')) {
     function getDirname() {
         return basename(getBaseDir());
