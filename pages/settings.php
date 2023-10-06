@@ -7,6 +7,8 @@
 
 use SLiMS\DB;
 use SLiMS\Filesystems\Storage;
+use SLiMS\Pdf\Factory;
+use SLiMS\Config;
 
 defined('INDEX_AUTH') OR die('Direct access not allowed!');
 
@@ -14,24 +16,70 @@ require SB . 'admin/default/session_check.inc.php';
 require_once SIMBIO . 'simbio_GUI/table/simbio_table.inc.php';
 require_once SIMBIO . 'simbio_GUI/form_maker/simbio_form_table_AJAX.inc.php';
 
+$defaultConfig = [
+    'fields' => [
+        'letternumber' => null,
+        'openstate' => null,
+        'closestate' => null,
+        'city' => null,
+        'librarian_position' => null,
+        'librarian' => null,
+        'numid' => null
+    ],
+    'default_provider' => [
+        'MyDompdf', \BebasPustaka\Providers\Dompdf::class
+    ]
+];
+
 if (isset($_POST['saveData'])) {
-    if ($_FILES['signature']['name'] || $_FILES['headerimage']['name']) {
-        $pluginDir = getDirname();
-        $pluginStorage = Storage::plugin();
-        foreach ($_FILES as $name => $detail) {
-            $pluginStorage->upload($name, function($pluginStorage) use($sysconf) {
-                // Extension check
-                $pluginStorage->isExtensionAllowed($sysconf['allowed_images']);
+    $pluginDir = getDirname();
+    $pluginStorage = Storage::plugin();
+    foreach ($_FILES as $name => $detail) {
+        if (empty($_FILES[$name]['name'])) continue;
 
-                // destroy it if failed
-                if (!empty($pluginStorage->getError())) $pluginStorage->destroyIfFailed();
+        $pluginStorage->upload($name, function($pluginStorage) use($sysconf) {
+            // Extension check
+            $pluginStorage->isExtensionAllowed($sysconf['allowed_images']);
 
-                // remove exif data
-                if (empty($pluginStorage->getError())) $pluginStorage->cleanExifInfo();
-            })->as($pluginDir . DS . 'static' . DS . str_replace('image', '', $name));
-        }
+            // destroy it if failed
+            if (!empty($pluginStorage->getError())) $pluginStorage->destroyIfFailed();
+
+            // remove exif data
+            if (empty($pluginStorage->getError())) $pluginStorage->cleanExifInfo();
+        })->as($pluginDir . DS . 'static' . DS . str_replace('image', '', $name));
     }
-    toastr('Hai')->alert();
+    
+    foreach ($_POST['fields'] as $key => $value) {
+        // if (!isset($defaultConfig['fields'][$key])) continue;
+        $defaultConfig['fields'][$key] = $value;
+    }
+
+    Config::createOrUpdate('bebas_pustaka', $defaultConfig);
+
+    echo <<<HTML
+    <script>
+        parent.$( '#preview' ).attr( 'src', function ( i, val ) { return val; });
+    </script>
+    HTML;
+    exit;
+}
+
+$config = config('bebas_pustaka', $defaultConfig);
+
+$config['fields'] = array_merge($config['fields'], [
+    'signature' => 'data:' . mime_content_type(getBaseDir('static/signature.png')) . ';base64, ' . base64_encode(getStatic('signature.png')),
+    'headerimage' => 'data:' . mime_content_type(getBaseDir('static/header.png')) . ';base64, ' . base64_encode(getStatic('header.png')),
+]);
+
+if (isset($_GET['preview'])) {
+    // Register provider
+    $provider = config('bebas_pustaka.default_provider', [
+        'MyDompdf', \BebasPustaka\Providers\Dompdf::class
+    ]);
+    Factory::registerProvider(...$provider);
+
+    Factory::useProvider($provider[0]);
+    Factory::preview();
     exit;
 }
 
@@ -44,23 +92,6 @@ $form->submit_button_attr = 'name="saveData" value="' . __('Update') . '" class=
 $form->table_attr = 'id="dataList" cellpadding="0" cellspacing="0"';
 $form->table_header_attr = 'class="alterCell"';
 $form->table_content_attr = 'class="alterCell2"';
-
-$config = config('bebas_pustaka', [
-    'fields' => [
-        'letternumber' => null,
-        'openstate' => null,
-        'closestate' => null,
-        'city' => null,
-        'librarian_position' => null,
-        'librarian' => null,
-        'numid' => null,
-        'signature' => 'data:' . mime_content_type(getBaseDir('static/signature.png')) . ';base64, ' . base64_encode(getStatic('signature.png')),
-        'headerimage' => 'data:' . mime_content_type(getBaseDir('static/header.png')) . ';base64, ' . base64_encode(getStatic('header.png')),
-    ],
-    'default_provider' => [
-        'MyDompdf', \BebasPustaka\Providers\Dompdf::class
-    ]
-]);
 
 foreach ($config['fields'] as $label => $value) {
     if (substr($value??'', 0,5) !== 'data:' && !in_array($label, ['openstate','closestate'])) {
@@ -87,9 +118,27 @@ foreach ($config['fields'] as $label => $value) {
 }
 
 echo $form->printOut();
-$content  = ob_get_clean();
+$formOutput = ob_get_clean();
+
+$previewUrl = $_SERVER['PHP_SELF'] . '?' . httpQuery(['preview' => 'ok']);
+$content = <<<HTML
+<div class="d-flex flex-row">
+    <div class="col-4" style="height: 100vh; overflow-y: auto; overflow-x: hidden">
+        {$formOutput}
+    </div>
+    <div class="col-8">
+        <iframe id="preview" src="{$previewUrl}" style="height: 100vh; width: 100%"></iframe>
+    </div>
+</div>
+HTML;
 $content .= <<<HTML
 <script>
+    $(document).ready(function() {
+        // setTimeout(() => {
+            // $( '#preview' ).attr( 'src', function ( i, val ) { return val; });
+        // }, 1500);
+    })
+
     $(document).on('change', '.custom-file-input', function () {
         // $('img').attr('src',document.getElementById("image").files[0].name);
         var input = $(this);

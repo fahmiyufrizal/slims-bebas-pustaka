@@ -88,7 +88,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'settings') {
 
 if (isset($_GET['action']) && $_GET['action'] === 'print')
 {
-    
     // Register provider
     $provider = config('bebas_pustaka.default_provider', [
         'MyDompdf', \BebasPustaka\Providers\Dompdf::class
@@ -96,8 +95,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'print')
     Factory::registerProvider(...$provider);
 
     Factory::useProvider($provider[0]);
-    $kop = getBaseDir('static/header.png');
-    $raw = base64_encode(getStatic('header.png'));
 
     $questionMark = trim(str_repeat('?,', count($_SESSION['bebas_pustaka'])), ',');
     $member = DB::getInstance()->prepare('select member_id, member_name, member_address from member where member_id in (' . $questionMark . ')');
@@ -125,7 +122,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'print')
             <div class="btn-group">
                 <a target="blindSubmit" href="<?= $_SERVER['PHP_SELF'] . '?' . httpQuery(['action' => 'clear']) ?>" class="notAJAX btn btn-danger mx-1"><?= __('Clear Print Queue') ?></a>
                 <a href="<?= $_SERVER['PHP_SELF'] . '?' . httpQuery(['action' => 'print']) ?>" width="765" height="500" class="notAJAX openPopUp btn btn-primary mx-1" onclick="$('#queueCount').html('0')">Cetak Surat Bebas Pustaka</a>
-                <a href="<?= $_SERVER['PHP_SELF'] . '?' . httpQuery(['action' => 'settings']) ?>" class="notAJAX btn btn-default openPopUp mx-1" width="780" height="500" title="Ubah Pengaturan Bebas Pustaka">Ubah Pengaturan Bebas Pustaka</a>
+                <a href="<?= $_SERVER['PHP_SELF'] . '?' . httpQuery(['action' => 'settings']) ?>" class="notAJAX btn btn-default openPopUp mx-1" width="1300" height="570" title="Ubah Pengaturan Bebas Pustaka">Ubah Pengaturan Bebas Pustaka</a>
             </div>
             <form name="search" action="<?= $_SERVER['PHP_SELF'] . '?' . httpQuery() ?>" id="search" method="get" class="form-inline"><?php echo __('Search'); ?>
                 <input type="text" name="keywords" class="form-control col-md-3"/>

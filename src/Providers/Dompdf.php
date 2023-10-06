@@ -8,6 +8,7 @@ use Carbon\Carbon;
 
 class Dompdf extends Contract
 {
+    protected string $name = 'Dompdf';
     public function setPdf():void
     {
         $this->pdf = new Core;
@@ -23,24 +24,31 @@ class Dompdf extends Contract
             'city' => 'Nama kota belum diatur',
             'librarian_position' => 'Posisi Pustakawan belum diatur',
             'librarian' => 'Nama pustakawan belum diatur',
-            'numid' => 'NIK/NIP Pustakwan belum diatur',
+            'numid' => 'NIK/NIP Pustakwan belum diatur'
+        ]);
+
+        $fields = array_merge($fields, [
             'signature' => 'data:' . mime_content_type(getBaseDir('static/signature.png')) . ';base64, ' . base64_encode(getStatic('signature.png')),
             'headerimage' => 'data:' . mime_content_type(getBaseDir('static/header.png')) . ';base64, ' . base64_encode(getStatic('header.png')),
         ]);
 
         $content = '';
-        foreach ($data as $order => $collection) {
-            $collection = array_merge($collection, $fields, ['date' => Carbon::parse(date('Y-m-d'))->locale('id_ID')->isoFormat('LL')]);
-            $content .= parseToTemplate(getTemplate($currentTemplate), $collection);
-            if (count($data) > 1 && $order !== array_key_last($data)) {
-                $content .= '<div style="page-break-before: always;"></div>';
+        if (count($data)) {
+            foreach ($data as $order => $collection) {
+                $collection = array_merge($collection, $fields, ['date' => Carbon::parse(date('Y-m-d'))->locale('id_ID')->isoFormat('LL')]);
+                $content .= parseToTemplate(getTemplate($currentTemplate), $collection);
+                if (count($data) > 1 && $order !== array_key_last($data)) {
+                    $content .= '<div style="page-break-before: always;"></div>';
+                }
             }
+        } else {
+            $content .= parseToTemplate(getTemplate($currentTemplate), $fields);
         }
 
         $this->pdf->loadHtml(parseToTemplate(getTemplate('layout.html'), ['content' => $content]));
         return $this;
     }
-    
+
     public function download(string $filename):void
     {
         $this->stream($filename, ['Attachment' => true]);
