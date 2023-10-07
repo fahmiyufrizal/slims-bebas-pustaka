@@ -9,11 +9,10 @@ class CreateTable extends Migration
     {
         Schema::create('bebas_pustaka_history', function(Blueprint $table) {
             $table->autoIncrement('id');
-            $table->number('order', 11)->notNull();
             $table->string('member_id', 20)->notNull();
             $table->text('letter_number_format')->notNull();
+            $table->unique('member_id');
             $table->index('member_id');
-            $table->index('order');
             $table->fulltext('letter_number_format');
             $table->timestamps();
             $table->engine = 'MyISAM';

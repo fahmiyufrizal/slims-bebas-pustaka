@@ -10,10 +10,6 @@ use SLiMS\DB;
 
 defined('INDEX_AUTH') OR die('Direct access not allowed!');
 
-// IP based access limitation
-require LIB . 'ip_based_access.inc.php';
-do_checkIP('smc');
-do_checkIP('smc-membership');
 // start the session
 require SB . 'admin/default/session.inc.php';
 require SB . 'admin/default/session_check.inc.php';
@@ -29,6 +25,10 @@ $can_read = utility::havePrivilege('membership', 'r');
 
 if (!$can_read) {
     die('<div class="errorBox">' . __('You are not authorized to view this section') . '</div>');
+}
+
+if (preg_replace('/[^0-9]/', '', SENAYAN_VERSION_TAG) < 961) {
+    die('<div class="errorBox font-weight-bold">Versi SLiMS anda tidak mendukung plugin ini. ('.SENAYAN_VERSION_TAG.' != v9.6.1)</div>');
 }
 
 function httpQuery($query = [])
@@ -88,6 +88,10 @@ if (isset($_GET['action']) && $_GET['action'] === 'settings') {
 
 if (isset($_GET['action']) && $_GET['action'] === 'print')
 {
+    if (count($_SESSION['bebas_pustaka']) < 1) {
+        include_once __DIR__ . DS . 'nodata_to_print.php';
+        exit;
+    }
     // Register provider
     $provider = config('bebas_pustaka.default_provider', [
         'MyDompdf', \BebasPustaka\Providers\Dompdf::class
@@ -108,7 +112,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'print')
     $_SESSION['bebas_pustaka'] = [];
     Factory::setContent($content)->stream();
     exit;
-    exit;
 }
 
 /* End Action Area */
@@ -121,8 +124,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'print')
         <div class="sub_section">
             <div class="btn-group">
                 <a target="blindSubmit" href="<?= $_SERVER['PHP_SELF'] . '?' . httpQuery(['action' => 'clear']) ?>" class="notAJAX btn btn-danger mx-1"><?= __('Clear Print Queue') ?></a>
-                <a href="<?= $_SERVER['PHP_SELF'] . '?' . httpQuery(['action' => 'print']) ?>" width="765" height="500" class="notAJAX openPopUp btn btn-primary mx-1" onclick="$('#queueCount').html('0')">Cetak Surat Bebas Pustaka</a>
-                <a href="<?= $_SERVER['PHP_SELF'] . '?' . httpQuery(['action' => 'settings']) ?>" class="notAJAX btn btn-default openPopUp mx-1" width="1300" height="570" title="Ubah Pengaturan Bebas Pustaka">Ubah Pengaturan Bebas Pustaka</a>
+                <a href="<?= $_SERVER['PHP_SELF'] . '?' . httpQuery(['action' => 'print']) ?>" id="print" width="765" height="500" class="notAJAX openPopUp btn btn-primary mx-1">Cetak Surat Bebas Pustaka</a>
+                <a href="<?= $_SERVER['PHP_SELF'] . '?' . httpQuery(['action' => 'settings']) ?>" id="setting" class="notAJAX btn btn-default openPopUp mx-1" title="Ubah Pengaturan Bebas Pustaka">Ubah Pengaturan Bebas Pustaka</a>
             </div>
             <form name="search" action="<?= $_SERVER['PHP_SELF'] . '?' . httpQuery() ?>" id="search" method="get" class="form-inline"><?php echo __('Search'); ?>
                 <input type="text" name="keywords" class="form-control col-md-3"/>
@@ -140,6 +143,20 @@ if (isset($_GET['action']) && $_GET['action'] === 'print')
         ?>
         </div>
     </div>
+    <script>
+        $(document).ready(function() {
+            $('#print').click(function(e) {
+                if ($('#queueCount').html() > 0) {
+                    $('#queueCount').html('0')
+                }
+            })
+
+            // set popup
+            let setting = $('#setting')
+            setting.attr('width', parseInt(window.innerWidth) - 125)
+            setting.attr('height', parseInt(window.innerHeight)  - 125)
+        })
+    </script>
 </div>
 
 <?php

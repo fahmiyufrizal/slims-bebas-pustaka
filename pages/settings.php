@@ -60,6 +60,8 @@ if (isset($_POST['saveData'])) {
         $providerClass
     ];
 
+    $defaultConfig['default_template'] = $_POST['template'];
+
     Config::createOrUpdate('bebas_pustaka', $defaultConfig);
 
     echo <<<HTML
@@ -98,6 +100,8 @@ $form->submit_button_attr = 'name="saveData" value="' . __('Update') . '" class=
 $form->table_attr = 'id="dataList" cellpadding="0" cellspacing="0"';
 $form->table_header_attr = 'class="alterCell"';
 $form->table_content_attr = 'class="alterCell2"';
+
+// Provider l ist
 $form->addSelectList('provider', __('Provider'), array_map(function($provider){
     $class = 'BebasPustaka\Providers\\' . str_replace('.php', '', $provider);
     return [
@@ -105,6 +109,16 @@ $form->addSelectList('provider', __('Provider'), array_map(function($provider){
         $class::$name
     ];
 }, getProviders()), $config['default_provider'], 'class="form-control"', 'Pilih default provider');
+
+// Provider l ist
+$form->addSelectList('template', __('Template'), array_map(function($template){
+    return [
+        $template,
+        ucfirst(str_replace('.html', '', $template))
+    ];
+}, getTemplates()), $config['default_template']??'default.html', 'class="form-control"', 'Pilih default provider');
+
+// Fields
 foreach ($config['fields'] as $label => $value) {
     if (substr($value??'', 0,5) !== 'data:' && !in_array($label, ['openstate','closestate'])) {
         $form->addTextField('text', 'fields[' . $label . ']', $label, $value??'', 'class="form-control" style="width: 100%;"', '');   
