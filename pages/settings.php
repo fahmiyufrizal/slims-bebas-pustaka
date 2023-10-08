@@ -44,8 +44,6 @@ if (isset($_POST['saveData'])) {
             // destroy it if failed
             if (!empty($pluginStorage->getError())) $pluginStorage->destroyIfFailed();
 
-            // remove exif data
-            if (empty($pluginStorage->getError())) $pluginStorage->cleanExifInfo();
         })->as($pluginDir . DS . 'static' . DS . str_replace('image', '', $name));
     }
     
