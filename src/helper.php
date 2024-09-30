@@ -1,5 +1,6 @@
 <?php
 use SLiMS\DB;
+use SLiMS\Plugins;
 
 if (!function_exists('getBaseDir')) {
     function getBaseDir(string $additionalPath = '') {
@@ -10,14 +11,29 @@ if (!function_exists('getBaseDir')) {
 if (!function_exists('getProviders')) {
     function getProviders()
     {
-        return array_diff(scandir(getBaseDir('src' . DS . 'Providers')), ['.','..']);
+        $providers = scandir(getBaseDir('src' . DS . 'Providers'));
+        Plugins::run('bebas_pustaka_provdier_init', [&$providers]);
+
+        return array_diff($providers, ['.','..']);
     }
 }
 
 if (!function_exists('getTemplates')) {
     function getTemplates()
     {
-        return array_diff(scandir(getBaseDir('template' . DS)), ['.','..','layout.html']);
+        $templates = scandir(getBaseDir('template' . DS));
+        Plugins::run('bebas_pustaka_template_init', [&$templates]);
+
+        // filtering only html file
+        $templates = array_filter($templates, function($template) {
+            // by pass layout
+            if (strpos($template, 'layout.html') !== false) return false;
+
+            // only template with .html format
+            return strpos($template, '.html') !== false ? str_replace('.php', '', $template) : false;
+        });
+
+        return array_diff($templates, ['.','..']);
     }
 }
 
@@ -29,7 +45,13 @@ if (!function_exists('getDirname')) {
 
 if (!function_exists('getTemplate')) {
     function getTemplate(string $filname) {
-        return file_exists($path = getBaseDir('template/' . $filname)) ? file_get_contents($path) : null;
+        if (count(explode('/', trim($filname))) > 1) {
+            $path = $filname;
+        } else {
+            $path = getBaseDir('template/' . $filname);
+        }
+
+        return file_exists($path) ? file_get_contents($path) : null;
     }
 }
 

@@ -112,7 +112,7 @@ $form->addSelectList('provider', __('Provider'), array_map(function($provider){
 $form->addSelectList('template', __('Template'), array_map(function($template){
     return [
         $template,
-        ucfirst(str_replace('.html', '', $template))
+        basename(ucfirst(str_replace('.html', '', $template)))
     ];
 }, getTemplates()), $config['default_template']??'default.html', 'class="form-control"', 'Pilih default provider');
 
