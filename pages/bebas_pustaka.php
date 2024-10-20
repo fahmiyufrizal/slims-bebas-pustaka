@@ -5,6 +5,7 @@
  * @File name           : index.php
  */
 
+use SLiMS\Plugins;
 use SLiMS\Pdf\Factory;
 use SLiMS\DB;
 
@@ -37,6 +38,8 @@ function httpQuery($query = [])
 }
 
 $page_title = 'Bebas Pustaka';
+
+Plugins::run('bebas_pustaka_page_init');
 
 /* Action Area */
 $max_print = 50;
