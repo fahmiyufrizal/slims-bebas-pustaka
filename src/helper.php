@@ -57,21 +57,32 @@ if (!function_exists('getTemplate')) {
 
 if (!function_exists('getOrder')) {
     function getOrder($memberId, string $format) {
-        $db = DB::getInstance();
-        $state = $db->prepare('insert ignore into `bebas_pustaka_history` set `member_id` = ?, `letter_number_format` = ?, `created_at` = now()');
-        $state->execute([$memberId, $format]);
+        $result = [
+            'no' => ''
+        ];
 
-        if ($db->lastInsertId() > 0) {
-            return ['no' => $db->lastInsertId()];
-        } else {
-            $state = $db->prepare('select `id` from `bebas_pustaka_history` where `member_id` = ?');
-            $state->execute([$memberId]);
-            
-            if ($state->rowCount() < 1) return ['no' => 0];
+        Plugins::run('bebas_pustaka_order_init', [&$result]);
 
-            $data = $state->fetchObject();
-            return ['no' => $data->id];
+        if (empty($result['no'])) {
+            $db = DB::getInstance();
+            $state = $db->prepare('insert ignore into `bebas_pustaka_history` set `member_id` = ?, `letter_number_format` = ?, `created_at` = now()');
+            $state->execute([$memberId, $format]);
+
+            if ($db->lastInsertId() > 0) {
+                $result['no'] = $db->lastInsertId();
+            } else {
+                $state = $db->prepare('select `id` from `bebas_pustaka_history` where `member_id` = ?');
+                $state->execute([$memberId]);
+                
+                if ($state->rowCount() < 1) return ['no' => 0];
+
+                $data = $state->fetchObject();
+                $result['no'] = $data->id;
+            }
         }
+
+
+        return $result;
     }
 }
 
