@@ -5,6 +5,7 @@
  * @File name           : index.php
  */
 
+use SLiMS\Plugins;
 use SLiMS\Pdf\Factory;
 use SLiMS\DB;
 
@@ -21,7 +22,7 @@ require SIMBIO . 'simbio_DB/datagrid/simbio_dbgrid.inc.php';
 // end dependency
 
 // privileges checking
-$can_read = utility::havePrivilege('membership', 'r');
+$can_read = utility::havePrivilege('circulation', 'r');
 
 if (!$can_read) {
     die('<div class="errorBox">' . __('You are not authorized to view this section') . '</div>');
@@ -37,6 +38,8 @@ function httpQuery($query = [])
 }
 
 $page_title = 'Bebas Pustaka';
+
+Plugins::run('bebas_pustaka_page_init');
 
 /* Action Area */
 $max_print = 50;

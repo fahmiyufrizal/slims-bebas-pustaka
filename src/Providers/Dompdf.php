@@ -5,6 +5,7 @@ use Closure;
 use SLiMS\Pdf\Contract;
 use Dompdf\Dompdf as Core;
 use Carbon\Carbon;
+use SLiMS\Plugins;
 
 class Dompdf extends Contract
 {
@@ -74,6 +75,9 @@ class Dompdf extends Contract
             'headerimage' => 'data:' . mime_content_type(getBaseDir('static/header.png')) . ';base64, ' . base64_encode(getStatic('header.png')),
         ]);
 
+        $layout = 'layout.html';
+        Plugins::run('bebas_pustaka_before_loading_content', [&$layout, &$fields, &$data]);
+
         /**
          * Content processing.
          * 
@@ -95,11 +99,11 @@ class Dompdf extends Contract
             }
         } else {
             // just for preview is only need $fields
-            $content .= parseToTemplate(getTemplate($currentTemplate), $fields);
+            $content .= parseToTemplate(getTemplate($currentTemplate)??'', $fields);
         }
 
         // Finnaly throw processed content to the PDF Generator
-        $this->pdf->loadHtml(parseToTemplate(getTemplate('layout.html'), ['content' => $content]));
+        $this->pdf->loadHtml(parseToTemplate(getTemplate($layout), ['content' => $content]));
         return $this;
     }
 
