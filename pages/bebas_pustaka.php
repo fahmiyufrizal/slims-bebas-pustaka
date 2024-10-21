@@ -22,7 +22,7 @@ require SIMBIO . 'simbio_DB/datagrid/simbio_dbgrid.inc.php';
 // end dependency
 
 // privileges checking
-$can_read = utility::havePrivilege('membership', 'r');
+$can_read = utility::havePrivilege('circulation', 'r');
 
 if (!$can_read) {
     die('<div class="errorBox">' . __('You are not authorized to view this section') . '</div>');
