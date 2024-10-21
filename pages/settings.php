@@ -118,26 +118,33 @@ $form->addSelectList('template', __('Template'), array_map(function($template){
 
 // Fields
 foreach ($config['fields'] as $label => $value) {
-    if (substr($value??'', 0,5) !== 'data:' && !in_array($label, ['openstate','closestate'])) {
+    if (substr($value??'', 0,5) !== 'data:' && !in_array($label, ['openstate','closestate', 'letternumber'])) {
         $form->addTextField('text', 'fields[' . $label . ']', $label, $value??'', 'class="form-control" style="width: 100%;"', '');   
     } else if (in_array($label, ['openstate','closestate'])) {
         $form->addTextField('textarea', 'fields[' . $label . ']', $label, $value??'', 'class="form-control" style="width: 100%;"', '');   
     } else {
-        $str_input = '<div class="row">';
-        $str_input .= '<div class="col-12">';
-        $str_input .= '<div id="imageFilename" class="s-margin__bottom-1">';
-        $str_input .= '<img src="' . $value .'" id="' . $label . '" class="d-block img-fluid rounded" alt="Image cover">';
-        $str_input .= '</div>';
-        $str_input .= '</div>';
-        $str_input .= '<div class="custom-file col-12">';
-        $str_input .= simbio_form_element::textField('file', $label, '', 'data-img="#' . $label . '" class="custom-file-input" id="customFile"');
-        $str_input .= '<label class="custom-file-label" for="customFile">' . __('Choose file') . '</label>';
-        $str_input .= '</div>';
-        $str_input .= ' <div class="mt-2 ml-2">Maximum ' . config('max_image_upload') . ' KB</div>';
-        $str_input .= '</div>';
-        $str_input .= '<textarea id="base64picstring" name="base64picstring" style="display: none;"></textarea>';
-        $str_input .= '</div></div></div>';
-        $form->addAnything($label, $str_input);
+        if ($label == 'letternumber') {
+            $form->addAnything($label, '
+                <input type="text" class="form-control" name="fields[letternumber]" value="' . ($value??'') . '"/>
+                <p>{no} : merupakan nomor surat. Nomor surat merekat pada setiap data anggota, jika surat bebas pustaka dicetak untuk ke sekian kalinya maka nomor yang akan digunakan adalah nomor sebelumnya.</p>
+            ');
+        } else {
+            $str_input = '<div class="row">';
+            $str_input .= '<div class="col-12">';
+            $str_input .= '<div id="imageFilename" class="s-margin__bottom-1">';
+            $str_input .= '<img src="' . $value .'" id="' . $label . '" class="d-block img-fluid rounded" alt="Image cover">';
+            $str_input .= '</div>';
+            $str_input .= '</div>';
+            $str_input .= '<div class="custom-file col-12">';
+            $str_input .= simbio_form_element::textField('file', $label, '', 'data-img="#' . $label . '" class="custom-file-input" id="customFile"');
+            $str_input .= '<label class="custom-file-label" for="customFile">' . __('Choose file') . '</label>';
+            $str_input .= '</div>';
+            $str_input .= ' <div class="mt-2 ml-2">Maximum ' . config('max_image_upload') . ' KB</div>';
+            $str_input .= '</div>';
+            $str_input .= '<textarea id="base64picstring" name="base64picstring" style="display: none;"></textarea>';
+            $str_input .= '</div></div></div>';
+            $form->addAnything($label, $str_input);
+        }
     }
 }
 
