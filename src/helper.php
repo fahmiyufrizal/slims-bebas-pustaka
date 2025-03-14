@@ -65,21 +65,22 @@ if (!function_exists('getOrder')) {
 
         if (empty($result['no'])) {
             $db = DB::getInstance();
-            $state = $db->prepare('insert ignore into `bebas_pustaka_history` set `member_id` = ?, `letter_number_format` = ?, `created_at` = now()');
+            $state = $db->prepare('INSERT IGNORE INTO `bebas_pustaka_history` (`member_id`, `letter_number_format`, `created_at`) VALUES (?, ?, NOW())');
             $state->execute([$memberId, $format]);
-
+        
             if ($db->lastInsertId() > 0) {
-                $result['no'] = $db->lastInsertId();
+                $result['no'] = str_pad($db->lastInsertId(), 3, '0', STR_PAD_LEFT); // ganti digit ke 3
             } else {
-                $state = $db->prepare('select `id` from `bebas_pustaka_history` where `member_id` = ?');
+                $state = $db->prepare('SELECT `id` FROM `bebas_pustaka_history` WHERE `member_id` = ?');
                 $state->execute([$memberId]);
-                
-                if ($state->rowCount() < 1) return ['no' => 0];
-
+        
+                if ($state->rowCount() < 1) return ['no' => '000']; // memastikan 3 digit
+        
                 $data = $state->fetchObject();
-                $result['no'] = $data->id;
+                $result['no'] = str_pad($data->id, 3, '0', STR_PAD_LEFT); // memastikan 3 digit
             }
         }
+
 
 
         return $result;
