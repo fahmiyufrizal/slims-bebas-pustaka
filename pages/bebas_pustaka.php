@@ -104,7 +104,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'print')
     Factory::useProvider($provider[0]);
 
     $questionMark = trim(str_repeat('?,', count($_SESSION['bebas_pustaka'])), ',');
-    $member = DB::getInstance()->prepare('select member_id, member_name, member_address from member where member_id in (' . $questionMark . ')');
+    $member = DB::getInstance()->prepare('select member_id, member_name, member_address, inst_name from member where member_id in (' . $questionMark . ')'); // menambah inst name sebagai pengganti kelas
     $member->execute($_SESSION['bebas_pustaka']);
 
     $content = [];
