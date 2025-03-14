@@ -1,5 +1,6 @@
-# Bebas Pustaka
+# Bebas Pustaka (rev)
 Plugin ini merupakan versi terbaru dari [FLL](https://github.com/drajathasan/fll) dengan fitur yang baru dan mudah digunakan serta kompatibel dengan SLiMS 9.6.1.
+Forked from [slims-bebas-pustaka](https://github.com/drajathasan/slims-bebas-pustaka) by drajathasan. Tribute to him, Al-Fatihah....
 
 # Unduh
 [Disini](https://github.com/drajathasan/slims-bebas-pustaka/releases/download/v3.0.0/slims-bebas-pustaka-3.0.0.zip)
